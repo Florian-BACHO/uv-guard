@@ -1,6 +1,6 @@
 import pytest
-import typer
 
+from uv_guard.exceptions import UvGuardException
 from uv_guard.token import resolve_guardrails_token
 
 
@@ -30,9 +30,5 @@ def test_resolve_guardrails_token_missing(mocker):
     mock_settings.rc.token = None
 
     # Run function and expect typer.Exit exception
-    with pytest.raises(typer.Exit) as exc_info:
+    with pytest.raises(UvGuardException):
         resolve_guardrails_token()
-
-    # Assertions
-    # Check that it exited with code 1
-    assert exc_info.value.exit_code == 1

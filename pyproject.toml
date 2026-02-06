@@ -23,7 +23,7 @@ keywords = [
     "python-packaging"
 ]
 dependencies = [
-    "guardrails-ai>=0.7.2",
+    "guardrails-ai>=0.8.0",
     "rich>=14.3.2",
     "tomlkit>=0.14.0",
     "typer>=0.19.2",

@@ -55,6 +55,17 @@ uv-guard init --name my-project
 ```
 forwards the `--name my-project` option.
 
+### Configure Guardrail AI
+Configure Guardrails AI. 
+You can get your API key from the [Guardrails Hub website](https://guardrailsai.com/hub).
+
+**Guardrails has to be configured to add Guardrails validators from the Hub.**
+
+```bash
+uv-guard configure
+```
+*Passes all arguments and options to `guardrails configure`.*
+
 ### Add Dependencies
 Adds a package to the project. This command intelligently handles both standard PyPI packages and Guardrails Hub URIs.
 
@@ -70,7 +81,7 @@ uv-guard add pandas
 # Add a Guardrails validator
 uv-guard add hub://guardrails/regex_match
 ```
-*Passes all standard arguments to `uv add`.*
+*Passes all arguments and options to `uv add`.*
 
 ### Remove Dependencies
 Uninstall the guardrails, removes the package from the `uv` environment and cleans up the `pyproject.toml`.
@@ -78,7 +89,7 @@ Uninstall the guardrails, removes the package from the `uv` environment and clea
 ```bash
 uv-guard remove hub://guardrails/regex_match
 ```
-*Passes all standard arguments to `uv remove`.*
+*Passes all arguments and options to `uv remove`.*
 
 ### Sync Environment
 Updates the project environment. This is the critical operation that ensures compatibility.
@@ -92,4 +103,4 @@ When syncing, `uv-guard`:
 ```bash
 uv-guard sync
 ```
-*Passes all standard arguments to `uv sync`.*
+*Passes all arguments and options to `uv sync`.*

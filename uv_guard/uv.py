@@ -2,10 +2,8 @@ import os
 import subprocess
 from collections.abc import Sequence
 
-import typer
-
+from uv_guard.exceptions import UvGuardException
 from uv_guard.token import resolve_guardrails_token
-from uv_guard.logs import error_console
 
 
 def _resolve_index_flags() -> Sequence[str]:
@@ -18,24 +16,27 @@ def _resolve_index_flags() -> Sequence[str]:
     ]
 
 
-def _call_uv(command: str, *args: str) -> None:
+def _call_uv(command: str, *args: str, quiet: bool = True) -> None:
     """Call uv with the given command and arguments/options."""
-    full_command = ["uv", command, "--quiet", *args]
+    full_command = ["uv", command, *args]
 
     env = os.environ.copy()
-    env["PYTHONIOENCODING"] = "utf-8"
-    env["LANG"] = "C.UTF-8"
+    stdout = None
+
+    if quiet:
+        full_command.append("--quiet")
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["LANG"] = "C.UTF-8"
+        stdout = subprocess.DEVNULL
 
     try:
-        subprocess.run(full_command, check=True, stdout=subprocess.DEVNULL, env=env)
+        subprocess.run(full_command, check=True, stdout=stdout, env=env)
     except FileNotFoundError:
-        error_console.print(
+        raise UvGuardException(
             "Error: Unable to invoke uv. Please ensure that uv is installed correctly and available in your system PATH."
         )
-        raise typer.Exit(code=1)
     except subprocess.CalledProcessError as e:
-        error_console.print(f"Error: uv command exited with code {e.returncode}")
-        raise typer.Exit(code=1)
+        raise UvGuardException(f"Error: uv command exited with code {e.returncode}")
 
 
 def init(*args) -> None:
@@ -43,9 +44,9 @@ def init(*args) -> None:
     _call_uv("init", *args)
 
 
-def add(packages: Sequence[str], *args: str) -> None:
+def add(packages: Sequence[str], *args: str, include_index_flags: bool = True) -> None:
     """Call the add command of uv."""
-    index_flags = _resolve_index_flags()
+    index_flags = _resolve_index_flags() if include_index_flags else []
 
     _call_uv("add", *packages, *index_flags, *args)
 
@@ -55,9 +56,9 @@ def remove(packages: Sequence[str], *args: str) -> None:
     _call_uv("remove", *packages, *args)
 
 
-def run(*args) -> None:
+def run(*args, quiet: bool = True) -> None:
     """Call the run command of uv."""
-    _call_uv("run", *args)
+    _call_uv("run", *args, quiet=quiet)
 
 
 def sync(*args) -> None:
