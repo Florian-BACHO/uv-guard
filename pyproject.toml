@@ -1,0 +1,45 @@
+[project]
+name = "uv-guard"
+version = "0.1.0a1"
+description = "uv-guard is a CLI tool that harmonizes the uv package manager with the Guardrails AI ecosystem."
+requires-python = ">=3.10,<4.0"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent"
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Florian Bacho", email = "f.bacho@outlook.fr" }
+]
+keywords = [
+    "uv",
+    "guardrails",
+    "guardrails-ai",
+    "llm",
+    "validation",
+    "cli",
+    "python-packaging"
+]
+dependencies = [
+    "guardrails-ai>=0.7.2",
+    "rich>=14.3.2",
+    "tomlkit>=0.14.0",
+    "typer>=0.19.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+uv-guard = "uv_guard.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.15.0",
+    "ty>=0.0.14",
+]
