@@ -28,9 +28,6 @@ def init(ctx: typer.Context) -> None:
     Execute 'uv init --help' for more information about uv arguments and options.
     """
     try:
-        # Check for Guardrails Hub token
-        resolve_guardrails_token()
-
         with console.status("Initializing project...\n") as status:
             uv.init(*ctx.args)
 
