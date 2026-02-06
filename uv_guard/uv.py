@@ -18,7 +18,7 @@ def _resolve_index_flags() -> Sequence[str]:
 
 def _call_uv(command: str, *args: str, quiet: bool = True) -> None:
     """Call uv with the given command and arguments/options."""
-    full_command = ["uv", command, *args]
+    full_command = ["uv", command]
 
     env = os.environ.copy()
     stdout = None
@@ -28,6 +28,8 @@ def _call_uv(command: str, *args: str, quiet: bool = True) -> None:
         env["PYTHONIOENCODING"] = "utf-8"
         env["LANG"] = "C.UTF-8"
         stdout = subprocess.DEVNULL
+
+    full_command.extend(args)
 
     try:
         subprocess.run(full_command, check=True, stdout=stdout, env=env)
