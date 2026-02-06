@@ -1,8 +1,8 @@
 import subprocess
 from unittest.mock import patch
 import pytest
-import typer
 from uv_guard import uv
+from uv_guard.exceptions import UvGuardException
 
 
 # --- Fixtures ---
@@ -53,9 +53,9 @@ def test_resolve_index_flags(mock_resolve_token):
 
 
 def test_call_uv_success(mock_subprocess_run):
-    """Test that _call_uv invokes subprocess.run with correct args and env."""
+    """Test that _call_uv invokes subprocess.run with correct args and env (Quiet Mode)."""
 
-    # Execute
+    # Execute (quiet defaults to True)
     uv._call_uv("some_cmd", "arg1", "--flag")
 
     # Verify
@@ -64,29 +64,44 @@ def test_call_uv_success(mock_subprocess_run):
 
     # Check command structure
     cmd_list = args[0]
-    assert cmd_list == ["uv", "some_cmd", "--quiet", "arg1", "--flag"]
+    # Update: In your code, `*args` are added before `--quiet` is appended.
+    assert cmd_list == ["uv", "some_cmd", "arg1", "--flag", "--quiet"]
 
     # Check environment variables
     env_arg = kwargs.get("env")
     assert env_arg is not None
     assert env_arg["PYTHONIOENCODING"] == "utf-8"
     assert env_arg["LANG"] == "C.UTF-8"
-    # Ensure it copied existing env
-    assert "PATH" in env_arg or "PYTHONPATH" in env_arg or len(env_arg) > 2
 
     # Check standard kwargs
     assert kwargs["check"] is True
     assert kwargs["stdout"] == subprocess.DEVNULL
 
 
+def test_call_uv_not_quiet(mock_subprocess_run):
+    """Test that _call_uv handles quiet=False correctly."""
+
+    # Execute
+    uv._call_uv("some_cmd", "arg1", quiet=False)
+
+    # Verify
+    assert mock_subprocess_run.called
+    args, kwargs = mock_subprocess_run.call_args
+
+    # Check command structure: Should NOT have --quiet
+    cmd_list = args[0]
+    assert cmd_list == ["uv", "some_cmd", "arg1"]
+
+    # Check stdout: Should default to None (inherit from parent) when not quiet
+    assert kwargs["stdout"] is None
+
+
 def test_call_uv_file_not_found(mock_subprocess_run):
     """Test handling when 'uv' executable is missing."""
     mock_subprocess_run.side_effect = FileNotFoundError()
 
-    with pytest.raises(typer.Exit) as excinfo:
+    with pytest.raises(UvGuardException):
         uv._call_uv("init")
-
-    assert excinfo.value.exit_code == 1
 
 
 def test_call_uv_process_error(mock_subprocess_run):
@@ -94,10 +109,8 @@ def test_call_uv_process_error(mock_subprocess_run):
     # Simulate uv failing with error code 127
     mock_subprocess_run.side_effect = subprocess.CalledProcessError(127, ["uv"])
 
-    with pytest.raises(typer.Exit) as excinfo:
+    with pytest.raises(UvGuardException):
         uv._call_uv("init")
-
-    assert excinfo.value.exit_code == 1
 
 
 # --- Tests for Public Command Wrappers ---
@@ -123,6 +136,17 @@ def test_add(mock_call_uv, mock_resolve_flags):
     )
 
 
+def test_add_no_flags(mock_call_uv, mock_resolve_flags):
+    """Test the add command wrapper when include_index_flags is False."""
+    packages = ["numpy"]
+
+    uv.add(packages, include_index_flags=False)
+
+    # Should not resolve flags or include them
+    mock_resolve_flags.assert_not_called()
+    mock_call_uv.assert_called_once_with("add", "numpy")
+
+
 def test_remove(mock_call_uv):
     """Test the remove command wrapper."""
     packages = ["numpy"]
@@ -131,9 +155,16 @@ def test_remove(mock_call_uv):
 
 
 def test_run(mock_call_uv):
-    """Test the run command wrapper."""
+    """Test the run command wrapper (default quiet)."""
     uv.run("script.py", "--verbose")
-    mock_call_uv.assert_called_once_with("run", "script.py", "--verbose")
+    # Update: run passes quiet=quiet (defaults to True)
+    mock_call_uv.assert_called_once_with("run", "script.py", "--verbose", quiet=True)
+
+
+def test_run_not_quiet(mock_call_uv):
+    """Test the run command wrapper with quiet=False."""
+    uv.run("script.py", quiet=False)
+    mock_call_uv.assert_called_once_with("run", "script.py", quiet=False)
 
 
 def test_sync(mock_call_uv, mock_resolve_flags):

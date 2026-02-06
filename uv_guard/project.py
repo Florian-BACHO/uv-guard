@@ -6,9 +6,8 @@ import tomlkit
 import tomlkit.items
 from pathlib import Path
 
-import typer
 
-from uv_guard.logs import error_console
+from uv_guard.exceptions import UvGuardException
 from uv_guard.package import get_guardrail_id_and_version
 
 GUARDRAILS_INDEX_URL = "https://pypi.guardrailsai.com/simple"
@@ -24,8 +23,7 @@ class ProjectManager:
         self.path = path if isinstance(path, Path) else Path(path)
 
         if not self.path.exists():
-            error_console.print("Error: pyproject.toml not found.")
-            raise typer.Exit(code=1)
+            raise UvGuardException("pyproject.toml not found.")
 
         self.project_doc: tomlkit.TOMLDocument | None = None
         self.read_only: bool = read_only
@@ -37,8 +35,7 @@ class ProjectManager:
             with self.path.open() as file:
                 self.project_doc = tomlkit.load(file)
         except Exception:
-            error_console.print(f"Error: Could not parse {self.path}.")
-            raise typer.Exit(code=1)
+            raise UvGuardException(f"Error: Could not parse {self.path}.")
 
         return self
 
@@ -53,8 +50,7 @@ class ProjectManager:
             with self.path.open("w") as file:
                 tomlkit.dump(cast(MutableMapping, self.project_doc), file)
         except Exception:
-            error_console.print(f"Error: Could not write {self.path}:")
-            raise typer.Exit(code=1)
+            raise UvGuardException(f"Error: Could not write {self.path}:")
 
     @property
     def _project_table(self) -> tomlkit.items.Table:
@@ -69,8 +65,7 @@ class ProjectManager:
         project_table = doc.get("project")
 
         if project_table is None or not isinstance(project_table, tomlkit.items.Table):
-            error_console.print(f'Error: "[project]" not found in {self.path}')
-            raise typer.Exit(code=1)
+            raise UvGuardException('Error: "[project]" not found in {self.path}')
 
         return project_table
 
@@ -85,8 +80,9 @@ class ProjectManager:
 
             return guardrails
         elif not isinstance(guardrails, tomlkit.items.Array):
-            error_console.print(f'Error: "guardrails" is not an array in {self.path}')
-            raise typer.Exit(code=1)
+            raise UvGuardException(
+                f'Error: "guardrails" is not an array in {self.path}'
+            )
 
         return guardrails.multiline(True)
 

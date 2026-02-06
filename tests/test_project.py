@@ -1,8 +1,8 @@
 import pytest
-import typer
 import tomlkit
 import tomlkit.items
 
+from uv_guard.exceptions import UvGuardException
 from uv_guard.project import ProjectManager
 
 
@@ -33,10 +33,8 @@ def test_init_file_not_found(tmp_path):
     """Test that initialization fails if the file doesn't exist."""
     non_existent = tmp_path / "missing.toml"
 
-    with pytest.raises(typer.Exit) as exc:
+    with pytest.raises(UvGuardException):
         ProjectManager(path=non_existent)
-
-    assert exc.value.exit_code == 1
 
 
 def test_context_manager_load_and_save(clean_project_toml):
@@ -70,11 +68,9 @@ def test_context_manager_invalid_toml(tmp_path):
     # It initializes fine (checks existence), but fails on __enter__
     manager = ProjectManager(path=bad_toml)
 
-    with pytest.raises(typer.Exit) as exc:
+    with pytest.raises(UvGuardException):
         with manager:
             pass
-
-    assert exc.value.exit_code == 1
 
 
 # -----------------------------------------------------------------------------
@@ -87,11 +83,9 @@ def test_project_table_missing(tmp_path):
     toml_path = tmp_path / "pyproject.toml"
     toml_path.write_text("[tool.something]\nfoo='bar'", encoding="utf-8")
 
-    with pytest.raises(typer.Exit) as exc:
+    with pytest.raises(UvGuardException):
         with ProjectManager(path=toml_path) as project:
             _ = project.guardrails
-
-    assert exc.value.exit_code == 1
 
 
 def test_guardrails_create_if_missing(clean_project_toml):
@@ -120,11 +114,9 @@ def test_guardrails_not_an_array(clean_project_toml):
         content + "\nguardrails = 'string_value'", encoding="utf-8"
     )
 
-    with pytest.raises(typer.Exit) as exc:
+    with pytest.raises(UvGuardException):
         with ProjectManager(path=clean_project_toml) as project:
             _ = project.guardrails
-
-    assert exc.value.exit_code == 1
 
 
 # -----------------------------------------------------------------------------
