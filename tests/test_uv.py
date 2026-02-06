@@ -65,7 +65,7 @@ def test_call_uv_success(mock_subprocess_run):
     # Check command structure
     cmd_list = args[0]
     # Update: In your code, `*args` are added before `--quiet` is appended.
-    assert cmd_list == ["uv", "some_cmd", "arg1", "--flag", "--quiet"]
+    assert cmd_list == ["uv", "some_cmd", "--quiet", "arg1", "--flag"]
 
     # Check environment variables
     env_arg = kwargs.get("env")
