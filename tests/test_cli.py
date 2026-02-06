@@ -95,7 +95,9 @@ def test_configure_command(mock_guardrails):
     assert "--disable-metrics" in call_args
 
 
-def test_add_standard_package(mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token):
+def test_add_standard_package(
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+):
     """Test adding a standard PyPI package."""
     result = runner.invoke(app, ["add", "requests"])
 
@@ -107,7 +109,9 @@ def test_add_standard_package(mock_uv, mock_project_manager, mock_guardrails, mo
     mock_guardrails.install.assert_not_called()
 
 
-def test_add_hub_uri(mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token):
+def test_add_hub_uri(
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+):
     """Test adding a Guardrails Hub URI."""
     hub_uri = "hub://guardrails/regex"
     resolved_name = "guardrails-grhub-regex"
@@ -126,7 +130,9 @@ def test_add_hub_uri(mock_uv, mock_project_manager, mock_guardrails, mock_resolv
     mock_guardrails.install.assert_called_once_with(hub_uri)
 
 
-def test_add_mixed_args(mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token):
+def test_add_mixed_args(
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+):
     """Test adding a mix of standard packages and hub URIs."""
     args = ["pandas", "hub://guardrails/pii"]
 
@@ -142,7 +148,9 @@ def test_add_mixed_args(mock_uv, mock_project_manager, mock_guardrails, mock_res
     mock_uv.add.assert_called_once_with(expected_uv)
 
 
-def test_remove_command(mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token):
+def test_remove_command(
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+):
     """Test removing a package."""
     hub_uri = "hub://guardrails/junk"
     resolved_name = "guardrails-grhub-junk"
@@ -161,7 +169,9 @@ def test_remove_command(mock_uv, mock_project_manager, mock_guardrails, mock_res
     mock_project_manager.remove_guardrail.assert_called_once_with(hub_uri)
 
 
-def test_sync_command(mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token):
+def test_sync_command(
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+):
     """Test syncing the environment."""
     # Setup mock project state
     mock_project_manager.guardrails = ["hub://guardrails/a", "hub://guardrails/b"]
@@ -184,7 +194,9 @@ def test_sync_command(mock_uv, mock_project_manager, mock_guardrails, mock_resol
     )
 
 
-def test_sync_pass_through_args(mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token):
+def test_sync_pass_through_args(
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+):
     """Test sync command passes extra args to uv."""
     mock_project_manager.guardrails = []  # No guardrails
 
