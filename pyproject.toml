@@ -1,6 +1,6 @@
 [project]
 name = "uv-guard"
-version = "0.1.0a1"
+version = "0.1.0a2"
 description = "uv-guard is a CLI tool that harmonizes the uv package manager with the Guardrails AI ecosystem."
 requires-python = ">=3.10,<4.0"
 classifiers = [
