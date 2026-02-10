@@ -239,6 +239,7 @@ def sync(
 
 
 def forward_to_uv(ctx: typer.Context) -> None:
+    """Forward the command to uv."""
     if ctx.command.name is None:
         error_console.print("Missing command.")
         raise typer.Exit(1)
@@ -307,6 +308,7 @@ UNIMPLEMENTED_COMMANDS = [
 
 
 def add_unimplemented_commands():
+    """Add all unimplemented uv commands to the CLI."""
     for command in UNIMPLEMENTED_COMMANDS:
         app.command(
             context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
