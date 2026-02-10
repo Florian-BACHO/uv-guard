@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import MagicMock, call, patch
 from typer.testing import CliRunner
 from uv_guard.cli import app
+from uv_guard.exceptions import UvGuardException
 
 runner = CliRunner()
 
@@ -21,6 +22,8 @@ def mock_project_manager():
     """
     Mocks the ProjectManager context manager.
     Returns the instance that would be yielded by 'with ProjectManager() as project:'.
+
+    Includes a reference to .mock_class so constructors can be verified.
     """
     with patch("uv_guard.cli.ProjectManager") as MockPM:
         # Create the mock instance that the context manager yields
@@ -31,6 +34,9 @@ def mock_project_manager():
 
         # Default behavior: simple pass-through for add_guardrail so tests verify flow
         project_instance.add_guardrail.side_effect = lambda x: x
+
+        # Attach the class mock to the instance so we can check __init__ calls in tests
+        project_instance.mock_class = MockPM
 
         yield project_instance
 
@@ -96,7 +102,7 @@ def test_configure_command(mock_guardrails):
 
 
 def test_add_standard_package(
-    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
     """Test adding a standard PyPI package."""
     result = runner.invoke(app, ["add", "requests"])
@@ -110,7 +116,7 @@ def test_add_standard_package(
 
 
 def test_add_hub_uri(
-    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
     """Test adding a Guardrails Hub URI."""
     hub_uri = "hub://guardrails/regex"
@@ -131,7 +137,7 @@ def test_add_hub_uri(
 
 
 def test_add_mixed_args(
-    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
     """Test adding a mix of standard packages and hub URIs."""
     args = ["pandas", "hub://guardrails/pii"]
@@ -149,7 +155,7 @@ def test_add_mixed_args(
 
 
 def test_remove_command(
-    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
     """Test removing a package."""
     hub_uri = "hub://guardrails/junk"
@@ -170,9 +176,9 @@ def test_remove_command(
 
 
 def test_sync_command(
-    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
-    """Test syncing the environment."""
+    """Test basic syncing behavior."""
     # Setup mock project state
     mock_project_manager.guardrails = ["hub://guardrails/a", "hub://guardrails/b"]
 
@@ -180,14 +186,19 @@ def test_sync_command(
 
     assert result.exit_code == 0
 
-    # 1. UV add called for existing guardrails
-    expected_deps = ["guardrails-ai", "guardrails-grhub-a", "guardrails-grhub-b"]
-    mock_uv.add.assert_called_once_with(expected_deps)
+    # 1. Verify ProjectManager initialization (default args)
+    mock_project_manager.mock_class.assert_called_once_with(
+        read_only=True,
+        include_all=False,
+        include_packages=None,
+        exclude_packages=None,
+        include_project=True  # Default since no_install_project is False
+    )
 
-    # 2. UV sync called
-    mock_uv.sync.assert_called_once()
+    # 2. UV sync called (no extra args passed)
+    mock_uv.sync.assert_called_once_with()
 
-    # 3. Install hooks re-run
+    # 3. Install hooks run for the returned guardrails
     assert mock_guardrails.install.call_count == 2
     mock_guardrails.install.assert_has_calls(
         [call("hub://guardrails/a"), call("hub://guardrails/b")]
@@ -195,14 +206,104 @@ def test_sync_command(
 
 
 def test_sync_pass_through_args(
-    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
-    """Test sync command passes extra args to uv."""
-    mock_project_manager.guardrails = []  # No guardrails
+    """Test sync command passes unknown extra args (like --frozen) to uv."""
+    mock_project_manager.guardrails = []
 
     result = runner.invoke(app, ["sync", "--frozen"])
 
     assert result.exit_code == 0
 
+    # Logic: standard typer args are parsed, unknown args (ctx.args) are preserved
+    mock_uv.sync.assert_called_once()
     call_args = mock_uv.sync.call_args[0]
     assert "--frozen" in call_args
+
+
+def test_sync_with_package_selection(
+        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+):
+    """Test sync with specific --package arguments."""
+    mock_project_manager.guardrails = ["hub://guardrails/pkg-specific"]
+
+    # We pass two packages
+    result = runner.invoke(app, ["sync", "--package", "api", "--package", "core"])
+
+    assert result.exit_code == 0
+
+    # 1. Verify ProjectManager received the filters
+    mock_project_manager.mock_class.assert_called_once()
+    _, kwargs = mock_project_manager.mock_class.call_args
+    assert kwargs["include_packages"] == ["api", "core"]
+
+    # 2. Verify UV received the reconstructed arguments
+    mock_uv.sync.assert_called_once()
+    args_passed_to_uv = mock_uv.sync.call_args[0]
+
+    # UV args should include --package api --package core
+    assert "--package" in args_passed_to_uv
+    assert "api" in args_passed_to_uv
+    assert "core" in args_passed_to_uv
+    assert args_passed_to_uv.count("--package") == 2
+
+
+def test_sync_with_flags(
+        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+):
+    """Test sync with boolean flags like --all-packages and --no-install-project."""
+    mock_project_manager.guardrails = []
+
+    result = runner.invoke(app, ["sync", "--all-packages", "--no-install-project"])
+
+    assert result.exit_code == 0
+
+    # 1. Verify ProjectManager received correct bool logic
+    mock_project_manager.mock_class.assert_called_once()
+    _, kwargs = mock_project_manager.mock_class.call_args
+
+    assert kwargs["include_all"] is True
+    assert kwargs["include_project"] is False  # Because no-install-project was True
+
+    # 2. Verify UV received the reconstructed flags
+    mock_uv.sync.assert_called_once()
+    args_passed_to_uv = mock_uv.sync.call_args[0]
+
+    assert "--all-packages" in args_passed_to_uv
+    assert "--no-install-project" in args_passed_to_uv
+
+
+def test_forward_to_uv_success():
+    """
+    Test that a forwarded command calls uv.call_uv with the correct
+    arguments and specifically quiet=False.
+    """
+    # Patch where call_uv is defined
+    with patch("uv_guard.uv.call_uv") as mock_call_uv:
+        # Simulate running: uv-guard lock --upgrade
+        result = runner.invoke(app, ["lock", "--upgrade"])
+
+        assert result.exit_code == 0
+
+        # Verify:
+        # 1. Command name "lock"
+        # 2. Argument "--upgrade"
+        # 3. Keyword argument quiet=False
+        mock_call_uv.assert_called_once_with("lock", "--upgrade", quiet=False)
+
+
+def test_forward_to_uv_exception_handling():
+    """
+    Test that if the underlying uv call fails (raises UvGuardException),
+    the CLI catches it, prints the error, and exits with code 1.
+    """
+    with patch("uv_guard.uv.call_uv") as mock_call_uv:
+        # Simulate call_uv raising an exception
+        error_message = "Simulated UV failure"
+        mock_call_uv.side_effect = UvGuardException(error_message)
+
+        # Invoke a forwarded command
+        result = runner.invoke(app, ["lock"])
+
+        # Assert clean exit with error code 1
+        assert result.exit_code == 1
