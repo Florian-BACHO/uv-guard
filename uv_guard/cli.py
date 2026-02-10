@@ -44,7 +44,7 @@ def init(ctx: typer.Context) -> None:
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
 )
 def configure(
-        ctx: typer.Context,
+    ctx: typer.Context,
 ) -> None:
     """
     Configure Guardrails AI.
@@ -64,13 +64,13 @@ def configure(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
 )
 def add(
-        ctx: typer.Context,
-        packages: Annotated[
-            List[str],
-            typer.Argument(
-                help="The packages to add, as PEP 508 requirements or Guardrails Hub URIs."
-            ),
-        ],
+    ctx: typer.Context,
+    packages: Annotated[
+        List[str],
+        typer.Argument(
+            help="The packages to add, as PEP 508 requirements or Guardrails Hub URIs."
+        ),
+    ],
 ) -> None:
     """
     Add dependencies to the project. Works for both Python and Guardrails Hub URIs.
@@ -98,9 +98,9 @@ def add(
 
         guardrails = [pkg for pkg in packages if is_guardrails_hub_uri(pkg)]
         for guardrail in track(
-                guardrails,
-                description="Running guardrails post-installation...",
-                transient=True,
+            guardrails,
+            description="Running guardrails post-installation...",
+            transient=True,
         ):
             guardrails_ai.install(guardrail)
     except UvGuardException as e:
@@ -114,13 +114,13 @@ def add(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
 )
 def remove(
-        ctx: typer.Context,
-        packages: Annotated[
-            List[str],
-            typer.Argument(
-                help="The packages to add, as PEP 508 requirements or Guardrails Hub URIs."
-            ),
-        ],
+    ctx: typer.Context,
+    packages: Annotated[
+        List[str],
+        typer.Argument(
+            help="The packages to add, as PEP 508 requirements or Guardrails Hub URIs."
+        ),
+    ],
 ):
     """
     Remove dependencies from the project. Works for both Python and Guardrails Hub URIs.
@@ -134,9 +134,9 @@ def remove(
         guardrails = [pkg for pkg in packages if is_guardrails_hub_uri(pkg)]
         if guardrails:
             for guardrail in track(
-                    guardrails,
-                    description="Uninstalling guardrails...",
-                    transient=True,
+                guardrails,
+                description="Uninstalling guardrails...",
+                transient=True,
             ):
                 guardrails_ai.uninstall(guardrail)
 
@@ -163,29 +163,21 @@ def remove(
 def sync(
     ctx: typer.Context,
     all_packages: bool = typer.Option(
-        False,
-        "--all-packages",
-        help="Sync all packages in the workspace."
+        False, "--all-packages", help="Sync all packages in the workspace."
     ),
     package: List[str] | None = typer.Option(
-        None,
-        "--package",
-        help="Sync for specific packages in the workspace."
+        None, "--package", help="Sync for specific packages in the workspace."
     ),
     no_install_project: bool = typer.Option(
-        False,
-        "--no-install-project",
-        help="Do not install the current project."
+        False, "--no-install-project", help="Do not install the current project."
     ),
     no_install_workspace: bool = typer.Option(
         False,
         "--no-install-workspace",
-        help="Do not install any workspace members, including the root project."
+        help="Do not install any workspace members, including the root project.",
     ),
     no_install_package: List[str] | None = typer.Option(
-        None,
-        "--no-install-package",
-        help="Do not install the given package(s)."
+        None, "--no-install-package", help="Do not install the given package(s)."
     ),
 ) -> None:
     """
@@ -231,9 +223,9 @@ def sync(
             uv.sync(*uv_args)
 
         for guardrail in track(
-                cast(Iterable, guardrails),
-                description="Running guardrails post-installation...",
-                transient=True,
+            cast(Iterable, guardrails),
+            description="Running guardrails post-installation...",
+            transient=True,
         ):
             guardrails_ai.install(guardrail)
     except UvGuardException as e:
@@ -245,7 +237,12 @@ def sync(
 
 # ---------- Unimplemented commands (forward to uv) ----------
 
+
 def forward_to_uv(ctx: typer.Context) -> None:
+    if ctx.command.name is None:
+        error_console.print("Missing command.")
+        raise typer.Exit(1)
+
     try:
         uv.call_uv(ctx.command.name, *ctx.args, quiet=False)
     except UvGuardException as e:
@@ -314,8 +311,8 @@ def add_unimplemented_commands():
         app.command(
             context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
             name=command["name"],
-            help=f"{command["help"]}\n\nExecute 'uv {command["name"]} --help' for more information about uv "
-                 f"arguments and options."
+            help=f"{command['help']}\n\nExecute 'uv {command['name']} --help' for more information about uv "
+            f"arguments and options.",
         )(forward_to_uv)
 
 

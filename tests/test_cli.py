@@ -102,7 +102,7 @@ def test_configure_command(mock_guardrails):
 
 
 def test_add_standard_package(
-        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
     """Test adding a standard PyPI package."""
     result = runner.invoke(app, ["add", "requests"])
@@ -116,7 +116,7 @@ def test_add_standard_package(
 
 
 def test_add_hub_uri(
-        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
     """Test adding a Guardrails Hub URI."""
     hub_uri = "hub://guardrails/regex"
@@ -137,7 +137,7 @@ def test_add_hub_uri(
 
 
 def test_add_mixed_args(
-        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
     """Test adding a mix of standard packages and hub URIs."""
     args = ["pandas", "hub://guardrails/pii"]
@@ -155,7 +155,7 @@ def test_add_mixed_args(
 
 
 def test_remove_command(
-        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
     """Test removing a package."""
     hub_uri = "hub://guardrails/junk"
@@ -176,7 +176,7 @@ def test_remove_command(
 
 
 def test_sync_command(
-        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
     """Test basic syncing behavior."""
     # Setup mock project state
@@ -192,7 +192,7 @@ def test_sync_command(
         include_all=False,
         include_packages=None,
         exclude_packages=None,
-        include_project=True  # Default since no_install_project is False
+        include_project=True,  # Default since no_install_project is False
     )
 
     # 2. UV sync called (no extra args passed)
@@ -206,7 +206,7 @@ def test_sync_command(
 
 
 def test_sync_pass_through_args(
-        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
     """Test sync command passes unknown extra args (like --frozen) to uv."""
     mock_project_manager.guardrails = []
@@ -222,7 +222,7 @@ def test_sync_pass_through_args(
 
 
 def test_sync_with_package_selection(
-        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
     """Test sync with specific --package arguments."""
     mock_project_manager.guardrails = ["hub://guardrails/pkg-specific"]
@@ -249,7 +249,7 @@ def test_sync_with_package_selection(
 
 
 def test_sync_with_flags(
-        mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
+    mock_uv, mock_project_manager, mock_guardrails, mock_resolve_guardrails_token
 ):
     """Test sync with boolean flags like --all-packages and --no-install-project."""
     mock_project_manager.guardrails = []

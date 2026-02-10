@@ -10,6 +10,7 @@ from uv_guard.project import ProjectManager
 # Fixtures
 # -----------------------------------------------------------------------------
 
+
 @pytest.fixture
 def clean_project_toml(tmp_path):
     """Creates a valid, basic pyproject.toml in a temp directory."""
@@ -46,22 +47,28 @@ def workspace_setup(tmp_path):
     # Package A
     pkg_a = tmp_path / "packages" / "pkg-a"
     pkg_a.mkdir(parents=True)
-    (pkg_a / "pyproject.toml").write_text("""
+    (pkg_a / "pyproject.toml").write_text(
+        """
     [project]
     name = "pkg-a"
     version = "0.1.0"
     guardrails = ["hub://pkg-a-guard"]
-    """, encoding="utf-8")
+    """,
+        encoding="utf-8",
+    )
 
     # Package B
     pkg_b = tmp_path / "packages" / "pkg-b"
     pkg_b.mkdir(parents=True)
-    (pkg_b / "pyproject.toml").write_text("""
+    (pkg_b / "pyproject.toml").write_text(
+        """
     [project]
     name = "pkg-b"
     version = "0.1.0"
     guardrails = ["hub://pkg-b-guard"]
-    """, encoding="utf-8")
+    """,
+        encoding="utf-8",
+    )
 
     return tmp_path / "pyproject.toml"
 
@@ -69,6 +76,7 @@ def workspace_setup(tmp_path):
 # -----------------------------------------------------------------------------
 # Initialization & Context Manager Tests
 # -----------------------------------------------------------------------------
+
 
 def test_init_file_not_found(tmp_path):
     """Test that initialization fails if the file doesn't exist."""
@@ -116,6 +124,7 @@ def test_context_manager_invalid_toml(tmp_path):
 # Property Access & Local Mutation Tests
 # -----------------------------------------------------------------------------
 
+
 def test_project_table_missing(tmp_path):
     """Test error when [project] table is missing."""
     toml_path = tmp_path / "pyproject.toml"
@@ -146,6 +155,7 @@ def test_guardrails_creation_on_add(clean_project_toml):
 # -----------------------------------------------------------------------------
 # Add/Remove Guardrails Logic (Local File)
 # -----------------------------------------------------------------------------
+
 
 def test_add_guardrail_new(clean_project_toml):
     """Test adding a new guardrail."""
@@ -205,6 +215,7 @@ def test_remove_guardrail_not_found(clean_project_toml):
 # Workspace & Filtering Tests (New Recursion Logic)
 # -----------------------------------------------------------------------------
 
+
 def test_workspace_default_root_only(workspace_setup):
     """By default, only the root project's guardrails are fetched."""
     with ProjectManager(path=workspace_setup) as project:
@@ -227,10 +238,7 @@ def test_workspace_include_all(workspace_setup):
 
 def test_workspace_specific_package(workspace_setup):
     """With include_packages=['pkg-a'], only root and pkg-a should be present."""
-    with ProjectManager(
-            path=workspace_setup,
-            include_packages=["pkg-a"]
-    ) as project:
+    with ProjectManager(path=workspace_setup, include_packages=["pkg-a"]) as project:
         gr = project.guardrails
 
         assert "hub://root-guard" in gr
@@ -244,17 +252,12 @@ def test_workspace_no_install_project(workspace_setup):
     root guardrails should be ignored.
     """
     # Case 1: Just root disabled, no other packages requested -> Empty result
-    with ProjectManager(
-            path=workspace_setup,
-            include_project=False
-    ) as project:
+    with ProjectManager(path=workspace_setup, include_project=False) as project:
         assert project.guardrails == []
 
     # Case 2: Root disabled, but --all-packages requested
     with ProjectManager(
-            path=workspace_setup,
-            include_project=False,
-            include_all=True
+        path=workspace_setup, include_project=False, include_all=True
     ) as project:
         gr = project.guardrails
         assert "hub://root-guard" not in gr
@@ -265,9 +268,7 @@ def test_workspace_no_install_project(workspace_setup):
 def test_workspace_exclude_package(workspace_setup):
     """Test exclude_packages (e.g. user passes --no-install-package)."""
     with ProjectManager(
-            path=workspace_setup,
-            include_all=True,
-            exclude_packages=["pkg-b"]
+        path=workspace_setup, include_all=True, exclude_packages=["pkg-b"]
     ) as project:
         gr = project.guardrails
 

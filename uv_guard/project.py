@@ -19,15 +19,15 @@ class ProjectManager:
     """A class to manage the projects.toml file with recursive workspace support."""
 
     def __init__(
-            self,
-            path: str | Path = "pyproject.toml",
-            read_only: bool = False,
-            # Filtering context passed down recursively
-            include_all: bool = False,
-            include_packages: List[str] | None = None,
-            exclude_packages: List[str] | None = None,
-            include_project: bool = True,
-            _is_root: bool = True,  # Internal flag to track recursion depth
+        self,
+        path: str | Path = "pyproject.toml",
+        read_only: bool = False,
+        # Filtering context passed down recursively
+        include_all: bool = False,
+        include_packages: List[str] | None = None,
+        exclude_packages: List[str] | None = None,
+        include_project: bool = True,
+        _is_root: bool = True,  # Internal flag to track recursion depth
     ) -> None:
         self.path = path if isinstance(path, Path) else Path(path).resolve()
 
@@ -146,15 +146,17 @@ class ProjectManager:
                     if member_path.exists():
                         # RECURSION: Instantiate a new manager for the member
                         # We pass _is_root=False so members know they are dependencies
-                        with ProjectManager(
+                        with (
+                            ProjectManager(
                                 path=member_path,
                                 read_only=True,  # Always read-only for children
                                 include_all=self.include_all,
                                 include_packages=list(self.include_packages),
                                 exclude_packages=list(self.exclude_packages),
                                 include_project=self.include_project,  # Passed but ignored due to _is_root=False
-                                _is_root=False
-                        ) as member_project:
+                                _is_root=False,
+                            ) as member_project
+                        ):
                             collected_guardrails.update(member_project.guardrails)
 
         return list(collected_guardrails)
