@@ -16,7 +16,7 @@ def _resolve_index_flags() -> Sequence[str]:
     ]
 
 
-def _call_uv(command: str, *args: str, quiet: bool = True) -> None:
+def call_uv(command: str, *args: str, quiet: bool = True) -> None:
     """Call uv with the given command and arguments/options."""
     full_command = ["uv", command]
 
@@ -43,28 +43,28 @@ def _call_uv(command: str, *args: str, quiet: bool = True) -> None:
 
 def init(*args) -> None:
     """Call the init command of uv."""
-    _call_uv("init", *args)
+    call_uv("init", *args)
 
 
 def add(packages: Sequence[str], *args: str, include_index_flags: bool = True) -> None:
     """Call the add command of uv."""
     index_flags = _resolve_index_flags() if include_index_flags else []
 
-    _call_uv("add", *packages, *index_flags, *args)
+    call_uv("add", *packages, *index_flags, *args)
 
 
 def remove(packages: Sequence[str], *args: str) -> None:
     """Call the remove command of uv."""
-    _call_uv("remove", *packages, *args)
+    call_uv("remove", *packages, *args)
 
 
 def run(*args, quiet: bool = True) -> None:
     """Call the run command of uv."""
-    _call_uv("run", *args, quiet=quiet)
+    call_uv("run", *args, quiet=quiet)
 
 
 def sync(*args) -> None:
     """Call the sync command of uv."""
     index_flags = _resolve_index_flags()
 
-    _call_uv("sync", *index_flags, *args)
+    call_uv("sync", *index_flags, *args)

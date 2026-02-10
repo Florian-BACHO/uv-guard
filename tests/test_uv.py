@@ -23,7 +23,7 @@ def mock_subprocess_run():
 @pytest.fixture
 def mock_call_uv():
     """Mocks the internal _call_uv function for testing high-level wrappers."""
-    with patch("uv_guard.uv._call_uv") as mock:
+    with patch("uv_guard.uv.call_uv") as mock:
         yield mock
 
 
@@ -53,10 +53,10 @@ def test_resolve_index_flags(mock_resolve_token):
 
 
 def test_call_uv_success(mock_subprocess_run):
-    """Test that _call_uv invokes subprocess.run with correct args and env (Quiet Mode)."""
+    """Test that call_uv invokes subprocess.run with correct args and env (Quiet Mode)."""
 
     # Execute (quiet defaults to True)
-    uv._call_uv("some_cmd", "arg1", "--flag")
+    uv.call_uv("some_cmd", "arg1", "--flag")
 
     # Verify
     assert mock_subprocess_run.called
@@ -79,10 +79,10 @@ def test_call_uv_success(mock_subprocess_run):
 
 
 def test_call_uv_not_quiet(mock_subprocess_run):
-    """Test that _call_uv handles quiet=False correctly."""
+    """Test that call_uv handles quiet=False correctly."""
 
     # Execute
-    uv._call_uv("some_cmd", "arg1", quiet=False)
+    uv.call_uv("some_cmd", "arg1", quiet=False)
 
     # Verify
     assert mock_subprocess_run.called
@@ -101,7 +101,7 @@ def test_call_uv_file_not_found(mock_subprocess_run):
     mock_subprocess_run.side_effect = FileNotFoundError()
 
     with pytest.raises(UvGuardException):
-        uv._call_uv("init")
+        uv.call_uv("init")
 
 
 def test_call_uv_process_error(mock_subprocess_run):
@@ -110,7 +110,7 @@ def test_call_uv_process_error(mock_subprocess_run):
     mock_subprocess_run.side_effect = subprocess.CalledProcessError(127, ["uv"])
 
     with pytest.raises(UvGuardException):
-        uv._call_uv("init")
+        uv.call_uv("init")
 
 
 # --- Tests for Public Command Wrappers ---

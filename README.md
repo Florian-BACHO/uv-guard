@@ -104,3 +104,20 @@ When syncing, `uv-guard`:
 uv-guard sync
 ```
 *Passes all arguments and options to `uv sync`.*
+
+### Other uv Commands
+All other `uv` commands are explicitly forwarded to the underlying `uv` executable. This allows you to use `uv-guard` as a drop-in replacement for `uv` in your daily workflow.
+
+Examples:
+
+```bash
+# Update the lockfile
+uv-guard lock
+
+# View the dependency tree
+uv-guard tree
+
+# Manage python versions
+uv-guard python install 3.12
+```
+*Supported commands include: `auth`, `lock`, `export`, `tree`, `format`, `tool`, `python`, `pip`, `venv`, `build`, `publish`, `cache`, and `self`.*

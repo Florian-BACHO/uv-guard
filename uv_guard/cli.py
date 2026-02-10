@@ -160,30 +160,67 @@ def remove(
 @app.command(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
 )
-def sync(ctx: typer.Context) -> None:
+def sync(
+    ctx: typer.Context,
+    all_packages: bool = typer.Option(
+        False, "--all-packages", help="Sync all packages in the workspace."
+    ),
+    package: List[str] | None = typer.Option(
+        None, "--package", help="Sync for specific packages in the workspace."
+    ),
+    no_install_project: bool = typer.Option(
+        False, "--no-install-project", help="Do not install the current project."
+    ),
+    no_install_workspace: bool = typer.Option(
+        False,
+        "--no-install-workspace",
+        help="Do not install any workspace members, including the root project.",
+    ),
+    no_install_package: List[str] | None = typer.Option(
+        None, "--no-install-package", help="Do not install the given package(s)."
+    ),
+) -> None:
     """
     Update the project's environment.
 
     Execute 'uv sync --help' for more information about uv arguments and options.
     """
     try:
+        uv_args = list(ctx.args)
+
+        if all_packages:
+            uv_args.append("--all-packages")
+
+        if no_install_project:
+            uv_args.append("--no-install-project")
+
+        if no_install_workspace:
+            uv_args.append("--no-install-workspace")
+
+        if package:
+            for p in package:
+                uv_args.extend(["--package", p])
+
+        if no_install_package:
+            for p in no_install_package:
+                uv_args.extend(["--no-install-package", p])
+
         # Check for Guardrails Hub token
         resolve_guardrails_token()
 
         with console.status("Fetching guardrails...\n") as status:
             # Get guardrails
-            with ProjectManager(read_only=True) as project:
+            with ProjectManager(
+                read_only=True,
+                include_all=all_packages,
+                include_packages=package,
+                exclude_packages=no_install_package,
+                include_project=not no_install_project,
+            ) as project:
                 guardrails = project.guardrails
 
-            status.update("Updating guardrails Python packages...\n")
-
-            # Resolve python package names (convert hub uris to python packages)
-            python_packages = [resolve_python_package(pkg) for pkg in guardrails]
-            # Add packages to uv
-            uv.add(["guardrails-ai"] + python_packages)
-
             status.update("Syncing Python packages...\n")
-            uv.sync(*ctx.args)
+            uv.sync(*uv_args)
 
         for guardrail in track(
             cast(Iterable, guardrails),
@@ -197,6 +234,91 @@ def sync(ctx: typer.Context) -> None:
 
     console.print("[bold green]Packages successfully synced.[/bold green]")
 
+
+# ---------- Unimplemented commands (forward to uv) ----------
+
+
+def forward_to_uv(ctx: typer.Context) -> None:
+    """Forward the command to uv."""
+    if ctx.command.name is None:
+        error_console.print("Missing command.")
+        raise typer.Exit(1)
+
+    try:
+        uv.call_uv(ctx.command.name, *ctx.args, quiet=False)
+    except UvGuardException as e:
+        error_console.print(e)
+        raise typer.Exit(1)
+
+
+UNIMPLEMENTED_COMMANDS = [
+    {
+        "name": "auth",
+        "help": "Manage authentication.",
+    },
+    {
+        "name": "lock",
+        "help": "Update the project's lockfile.",
+    },
+    {
+        "name": "export",
+        "help": "Export the project's lockfile to an alternate format.",
+    },
+    {
+        "name": "tree",
+        "help": "Display the project's dependency tree.",
+    },
+    {
+        "name": "format",
+        "help": "Format Python code in the project.",
+    },
+    {
+        "name": "tool",
+        "help": "Run and install commands provided by Python packages.",
+    },
+    {
+        "name": "python",
+        "help": "Manage Python versions and installations.",
+    },
+    {
+        "name": "pip",
+        "help": "Manage Python packages with a pip-compatible interface.",
+    },
+    {
+        "name": "venv",
+        "help": "Create a virtual environment.",
+    },
+    {
+        "name": "build",
+        "help": "Build Python packages into source distributions and wheels.",
+    },
+    {
+        "name": "publish",
+        "help": "Upload distributions to an index.",
+    },
+    {
+        "name": "cache",
+        "help": "Manage uv's cache.",
+    },
+    {
+        "name": "self",
+        "help": "Manage the uv executable.",
+    },
+]
+
+
+def add_unimplemented_commands():
+    """Add all unimplemented uv commands to the CLI."""
+    for command in UNIMPLEMENTED_COMMANDS:
+        app.command(
+            context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+            name=command["name"],
+            help=f"{command['help']}\n\nExecute 'uv {command['name']} --help' for more information about uv "
+            f"arguments and options.",
+        )(forward_to_uv)
+
+
+add_unimplemented_commands()
 
 if __name__ == "__main__":
     app()
