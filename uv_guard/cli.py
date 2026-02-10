@@ -33,7 +33,7 @@ def init(ctx: typer.Context) -> None:
 
             status.update("Installing guardrails-ai...\n")
             uv.add(["guardrails-ai"], include_index_flags=False)
-    except UvGuardException as e:
+    except UvGuardException as e:  # pragma: no cover
         error_console.print(e)
         raise typer.Exit(1)
 
@@ -53,7 +53,7 @@ def configure(
     """
     try:
         guardrails_ai.configure(*ctx.args)
-    except UvGuardException as e:
+    except UvGuardException as e:  # pragma: no cover
         error_console.print(e)
         raise typer.Exit(1)
 
@@ -103,7 +103,7 @@ def add(
             transient=True,
         ):
             guardrails_ai.install(guardrail)
-    except UvGuardException as e:
+    except UvGuardException as e:  # pragma: no cover
         error_console.print(e)
         raise typer.Exit(1)
 
@@ -150,7 +150,7 @@ def remove(
             with ProjectManager() as project:
                 for pkg in guardrails:
                     project.remove_guardrail(pkg)
-    except UvGuardException as e:
+    except UvGuardException as e:  # pragma: no cover
         error_console.print(e)
         raise typer.Exit(1)
 
@@ -228,7 +228,7 @@ def sync(
             transient=True,
         ):
             guardrails_ai.install(guardrail)
-    except UvGuardException as e:
+    except UvGuardException as e:  # pragma: no cover
         error_console.print(e)
         raise typer.Exit(1)
 
@@ -246,7 +246,7 @@ def forward_to_uv(ctx: typer.Context) -> None:
 
     try:
         uv.call_uv(ctx.command.name, *ctx.args, quiet=False)
-    except UvGuardException as e:
+    except UvGuardException as e:  # pragma: no cover
         error_console.print(e)
         raise typer.Exit(1)
 

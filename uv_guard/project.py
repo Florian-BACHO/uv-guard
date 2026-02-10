@@ -60,7 +60,7 @@ class ProjectManager:
         try:
             with self.path.open("w") as file:
                 tomlkit.dump(cast(MutableMapping, self.project_doc), file)
-        except Exception:
+        except Exception:  # pragma: no cover
             raise UvGuardException(f"Error: Could not write {self.path}")
 
     @property
@@ -68,8 +68,6 @@ class ProjectManager:
         """Return the project table."""
         doc = cast(Any, self.project_doc)
         if doc is None:
-            # Auto-load if accessed outside context manager for read-only ops,
-            # or raise error. Prefer explicit loading.
             raise ValueError("project.toml is not loaded.")
 
         project_table = doc.get("project")
