@@ -257,6 +257,14 @@ UNIMPLEMENTED_COMMANDS = [
         "help": "Manage authentication.",
     },
     {
+        "name": "run",
+        "help": "Run a command or script.",
+    },
+    {
+        "name": "version",
+        "help": "Read or update the project's version.",
+    },
+    {
         "name": "lock",
         "help": "Update the project's lockfile.",
     },

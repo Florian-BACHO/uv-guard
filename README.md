@@ -120,4 +120,4 @@ uv-guard tree
 # Manage python versions
 uv-guard python install 3.12
 ```
-*Supported commands include: `auth`, `lock`, `export`, `tree`, `format`, `tool`, `python`, `pip`, `venv`, `build`, `publish`, `cache`, and `self`.*
+*Supported commands include: `auth`, `run`, `version`, `lock`, `export`, `tree`, `format`, `tool`, `python`, `pip`, `venv`, `build`, `publish`, `cache`, and `self`.*
