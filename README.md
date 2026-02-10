@@ -29,6 +29,7 @@ guardrails = [
 
 - **Python**: 3.10+
 - **uv**: See the [uv installation page](https://docs.astral.sh/uv/getting-started/installation/)
+- **guardrails CLI**: By running `uv tool install guardrails-ai`
 
 ## Installation
 
